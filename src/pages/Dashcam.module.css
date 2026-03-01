@@ -1,0 +1,40 @@
+.header{margin-bottom:24px;}
+.title{font-family:var(--font-display);font-size:2.2rem;letter-spacing:1px;line-height:1;}
+.sub{font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:4px;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.sectionLabel{font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:2.5px;display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sectionLabel::after{content:'';flex:1;height:1px;background:var(--border);}
+.card{background:var(--surface);border:1px solid var(--border);padding:18px;}
+.device{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.device:last-child{border-bottom:none;}
+.deviceIcon{width:40px;height:40px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.deviceInfo{flex:1;}
+.deviceName{font-family:var(--font-mono);font-size:0.72rem;color:var(--text);}
+.deviceStatus{font-family:var(--font-mono);font-size:0.6rem;margin-top:2px;}
+.actionBtn{background:transparent;border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:0.62rem;padding:6px 12px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s;}
+.actionBtn:hover{border-color:var(--red);color:var(--red);}
+.testBtn{background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--font-mono);font-size:0.65rem;padding:8px 16px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s;}
+.testBtn:hover{border-color:var(--green);color:var(--green);}
+.cfgGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.label{font-family:var(--font-mono);font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.input{background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:9px 12px;font-family:var(--font-mono);font-size:0.78rem;outline:none;transition:border-color 0.2s;width:100%;-webkit-appearance:none;}
+.input:focus{border-color:var(--red);}
+.input option{background:var(--bg);}
+.toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);}
+.toggle:last-child{border-bottom:none;}
+.tLabel{font-family:var(--font-mono);font-size:0.72rem;color:var(--text);}
+.tSub{font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);margin-top:2px;}
+.switch{width:40px;height:22px;background:var(--border2);border-radius:11px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+.on{background:var(--green);}
+.thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left 0.2s;}
+.on .thumb{left:21px;}
+.saveBtn{background:var(--red);color:#fff;border:none;padding:11px 22px;font-family:var(--font-mono);font-size:0.7rem;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:background 0.15s;}
+.saveBtn:hover{background:#c42520;}
+.arch{display:flex;align-items:center;gap:4px;overflow-x:auto;padding:8px;background:var(--surface);border:1px solid var(--border);}
+.archStep{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.archBox{background:var(--surface2);border:1px solid var(--border2);padding:12px 16px;text-align:center;min-width:110px;}
+.archIcon{font-size:1.3rem;margin-bottom:5px;}
+.archLabel{font-family:var(--font-mono);font-size:0.62rem;color:var(--text);}
+.archSub{font-family:var(--font-mono);font-size:0.56rem;color:var(--muted);margin-top:2px;}
+.archArrow{font-family:var(--font-mono);color:var(--red);font-size:1.1rem;padding:0 2px;}
