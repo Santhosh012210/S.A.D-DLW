@@ -43,3 +43,37 @@ src/
 │   └── Profile.js             ← Driver profile
 └── App.js                     ← Router
 ```
+
+## Email Recipients
+- Configure EmailJS keys in .env from .env.example to enable real sending.
+- Emergency reports can now send to both family and dispatcher emails.
+- Add recipient addresses in Profile: Emergency Contact Email and Dispatcher Email.
+
+## Ollama Crash Analysis
+- Local Ollama endpoint is expected at `http://localhost:11434/api/generate`.
+- Configure templates in `.env` with:
+  - `REACT_APP_EMAILJS_TEMPLATE_DISPATCHER_ID`
+  - `REACT_APP_EMAILJS_TEMPLATE_LOVED_ONES_ID`
+
+## TFLite Crash Model Integration (Local)
+- The app now supports a local vision model endpoint for crash analysis.
+- Set `.env`:
+  - `REACT_APP_ANALYSIS_PROVIDER=local_model` (or `auto` for local model then Ollama fallback)
+  - `REACT_APP_CRASH_MODEL_URL=http://127.0.0.1:5000/analyze`
+
+Run local model server:
+```bash
+cd ml
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+pip install -r requirements.txt
+# Option A: place best_float32.tflite in this ml/ folder
+# Option B: point to existing model file
+# set CRASH_MODEL_PATH=C:\Users\Santhosh\OneDrive\Desktop\Crash test\best_float32.tflite
+python local_server.py
+```
+
+Quick checks:
+- `http://127.0.0.1:5000/health`
+- `POST http://127.0.0.1:5000/analyze`

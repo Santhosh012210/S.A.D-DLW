@@ -2,7 +2,8 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { login as authLogin, register as authRegister, logout as authLogout, onAuthChange } from '../services/authService';
 import { saveIncident, fetchIncidents, saveProfile, loadProfile } from '../services/dbService';
-import { sendEmergencyEmail, EMAIL_CONFIGURED } from '../services/emailService';
+import { EMAIL_CONFIGURED } from '../services/emailService';
+import { handleCrashEvent } from '../services/crashOrchestrator';
 import { FIREBASE_CONFIGURED } from '../firebase';
 
 const AppContext = createContext(null);
@@ -10,6 +11,7 @@ const AppContext = createContext(null);
 const EMPTY_PROFILE = {
   name: '', email: '', phone: '',
   emergencyEmail: '', emergencyName: '',
+  dispatcherEmail: '', dispatcherName: '',
   plate: '', vehicle: '', vehicleColor: '', blood: 'O+',
 };
 
@@ -86,8 +88,15 @@ export function AppProvider({ children }) {
     return saved;
   }, [authUser]);
 
-  const sendReport = useCallback(async (incident) => {
-    return await sendEmergencyEmail({ user: profile, incident });
+  const sendReport = useCallback(async (incident, userOverride = null, metricsOverride = null) => {
+    const user = userOverride || profile;
+    const metrics = metricsOverride || incident?.metrics || {
+      impactScore: Math.round((incident?.score || 0) * 100),
+      speed: 0,
+      gyro: 0,
+      accel: 0,
+    };
+    return await handleCrashEvent({ user, incident, metrics });
   }, [profile]);
 
   return (

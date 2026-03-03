@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import styles from './CrashModal.module.css';
 
 const SEVERITY_MAP = {
-  minor:    { label:'MINOR COLLISION',    color:'var(--green)', bg:'rgba(34,197,94,0.12)',    score:0.22 },
-  moderate: { label:'MODERATE COLLISION', color:'var(--amber)', bg:'rgba(245,158,11,0.12)',   score:0.61 },
-  severe:   { label:'SEVERE COLLISION',   color:'var(--red)',   bg:'rgba(232,48,42,0.12)',    score:0.91 },
+  minor:    { label:'MINOR COLLISION',    color:'var(--green)', bg:'rgba(34,197,94,0.12)',    score:0.27 },
+  moderate: { label:'MODERATE COLLISION', color:'var(--amber)', bg:'rgba(245,158,11,0.12)',   score:0.66 },
+  severe:   { label:'SEVERE COLLISION',   color:'var(--red)',   bg:'rgba(232,48,42,0.12)',    score:0.95 },
 };
 const SUMMARIES = {
   minor:    'Low-impact collision detected. Slight deceleration spike observed. Airbags not deployed. Driver should assess surroundings. Medical check recommended as precaution.',
@@ -20,8 +20,16 @@ const AI_STEPS = [
   'Preparing adaptive escalation packet...',
 ];
 
-export default function CrashModal({ open, onClose, onSent }) {
+export default function CrashModal({
+  open,
+  onClose,
+  onSent,
+  initialSeverity = 'severe',
+  initialScore = 0.91,
+  initialSnapshot = '',
+}) {
   const { profile, addIncident, sendReport, showToast, FIREBASE_CONFIGURED, EMAIL_CONFIGURED } = useApp();
+  const autoSendRef = useRef(false);
   const [phase,    setPhase]    = useState('processing');
   const [stepIdx,  setStepIdx]  = useState(0);
   const [progress, setProgress] = useState(0);
@@ -30,10 +38,11 @@ export default function CrashModal({ open, onClose, onSent }) {
 
   useEffect(() => {
     if (!open) return;
+    autoSendRef.current = false;
     setPhase('processing');
     setStepIdx(0);
     setProgress(0);
-    const sev = ['minor','moderate','severe'][Math.floor(Math.random()*3)];
+    const sev = ['minor', 'moderate', 'severe'].includes(initialSeverity) ? initialSeverity : 'severe';
     setSeverity(sev);
     let step = 0;
     const iv = setInterval(() => {
@@ -43,40 +52,68 @@ export default function CrashModal({ open, onClose, onSent }) {
       if (step >= AI_STEPS.length) { clearInterval(iv); setTimeout(()=>setPhase('report'),300); }
     }, 650);
     return () => clearInterval(iv);
-  }, [open]);
+  }, [open, initialSeverity]);
 
   const handleSend = async () => {
+    if (sending) return;
+    const targetRecipients = [profile.emergencyEmail, profile.dispatcherEmail]
+      .flatMap(v => String(v || '').split(/[;,]/))
+      .map(v => v.trim())
+      .filter(Boolean);
+
+    if (targetRecipients.length === 0) {
+      showToast('Add family or dispatcher email in Profile first', 'error');
+      return;
+    }
+
     setSending(true);
+    const baseScore = Number.isFinite(Number(initialScore)) ? Number(initialScore) : SEVERITY_MAP[severity].score;
+    const resolvedScore = Math.max(0, Math.min(1, baseScore > 1 ? baseScore / 100 : baseScore));
+    const impactScore = Math.round(resolvedScore * 100);
     const incident = {
       timestamp: new Date().toISOString(),
       severity,
-      score: SEVERITY_MAP[severity].score,
+      score: resolvedScore,
       summary: SUMMARIES[severity],
       gps: { lat:1.3521, lng:103.8198 },
       location: 'Buona Vista, Singapore',
+      metrics: {
+        impactScore,
+        speed: severity === 'severe' ? 95 : severity === 'moderate' ? 64 : 34,
+        gyro: severity === 'severe' ? 8.7 : severity === 'moderate' ? 5.3 : 2.2,
+        accel: severity === 'severe' ? 3.4 : severity === 'moderate' ? 2.1 : 1.2,
+      },
+      screenshotDataUrl: initialSnapshot || '',
       user: { ...profile },
     };
     try {
-      // 1) save to Firebase / localStorage
-      await addIncident(incident);
+      const savedIncident = await addIncident(incident);
       const dbLabel = FIREBASE_CONFIGURED ? 'Firebase' : 'LocalStorage';
-      showToast(`✓ Incident saved to ${dbLabel}`, 'success');
-      // 2) send email
-      const emailResult = await sendReport(incident);
-      if (emailResult.real) {
-        showToast(`📧 Real email sent to ${profile.emergencyEmail}`, 'success');
+      showToast(`Incident saved to ${dbLabel}`, 'success');
+
+      const emailResult = await sendReport(savedIncident);
+      if (emailResult.duplicate) {
+        showToast('Duplicate crash event blocked. No duplicate emails sent.', 'warn');
+      } else if (!emailResult.crashDetected) {
+        showToast('AI classified event as non-crash. No emails sent.', 'warn');
+      } else if (emailResult.real) {
+        showToast(`Report ${emailResult.reportId} sent to ${emailResult.recipients.join(', ')}`, 'success');
       } else {
-        showToast(`📧 Email simulated → add EmailJS keys to .env`, 'warn');
+        showToast('Emails simulated - set EmailJS keys/templates in .env for real delivery', 'warn');
       }
-      // 3) dispatcher toast
-      setTimeout(()=>showToast('📡 Dispatcher report transmitted','success'), 600);
     } catch(err) {
-      showToast('Error: ' + (err.message||'Unknown error'), 'error');
+      showToast('Error: ' + (err.message || 'Unknown error'), 'error');
     }
     setSending(false);
     onSent?.();
     onClose();
   };
+
+  useEffect(() => {
+    if (!open || phase !== 'report' || autoSendRef.current) return;
+    autoSendRef.current = true;
+    handleSend();
+  }, [open, phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!open) return null;
 
@@ -160,7 +197,7 @@ export default function CrashModal({ open, onClose, onSent }) {
 
               <div className={styles.actions}>
                 <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleSend} disabled={sending}>
-                  {sending ? <span className={styles.spinner}/> : '📡'} Send Emergency Report
+                  {sending ? <span className={styles.spinner}/> : '📡'} {sending ? 'Sending...' : 'Send Emergency Report'}
                 </button>
                 <button className={`${styles.btn} ${styles.btnOutline}`} onClick={onClose}>Dismiss</button>
               </div>
@@ -171,3 +208,4 @@ export default function CrashModal({ open, onClose, onSent }) {
     </div>
   );
 }
+

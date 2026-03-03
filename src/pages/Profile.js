@@ -12,9 +12,10 @@ function Field({ label, id, type='text', value, onChange, placeholder }) {
 }
 
 export default function Profile() {
-  const { profile, updateProfile, showToast, FIREBASE_CONFIGURED } = useApp();
+  const { profile, updateProfile, sendReport, showToast, FIREBASE_CONFIGURED, EMAIL_CONFIGURED } = useApp();
   const [form, setForm] = useState({...profile});
   const [saving, setSaving] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
 
   useEffect(() => { setForm({...profile}); }, [profile]);
   const set = k => e => setForm(p=>({...p,[k]:e.target.value}));
@@ -28,6 +29,42 @@ export default function Profile() {
       showToast('Save failed: '+err.message, 'error');
     }
     setSaving(false);
+  };
+
+  const sendTestEmail = async () => {
+    setSendingTest(true);
+    try {
+      const incident = {
+        timestamp: new Date().toISOString(),
+        severity: 'moderate',
+        score: 0.67,
+        summary: 'This is a test notification from CrashGuard profile settings.',
+        gps: { lat: 1.3521, lng: 103.8198 },
+        location: 'Profile Test Trigger',
+        metrics: {
+          impactScore: 67,
+          speed: 58,
+          gyro: 4.2,
+          accel: 1.9,
+        },
+        isTest: true,
+      };
+
+      // Use current form values so user can test before pressing save.
+      const emailResult = await sendReport(incident, form);
+      if (emailResult.duplicate) {
+        showToast('Duplicate test event blocked. No duplicate emails sent.', 'warn');
+      } else if (!emailResult.crashDetected) {
+        showToast('Ollama marked test as non-crash. No email sent.', 'warn');
+      } else if (emailResult.real) {
+        showToast(`Test email sent to ${emailResult.recipients.join(', ')}`, 'success');
+      } else {
+        showToast('Test email simulated - verify EmailJS keys and template ids in .env', 'warn');
+      }
+    } catch (err) {
+      showToast('Test email failed: ' + (err.message || 'Unknown error'), 'error');
+    }
+    setSendingTest(false);
   };
 
   const initial = form.name?.charAt(0)?.toUpperCase() || '?';
@@ -78,11 +115,13 @@ export default function Profile() {
             <div className={styles.formGrid}>
               <Field label="Contact Name" id="ecn" value={form.emergencyName} onChange={set('emergencyName')} placeholder="Parent / Guardian" />
               <Field label="Contact Email" id="ece" type="email" value={form.emergencyEmail} onChange={set('emergencyEmail')} placeholder="family@example.com" />
+              <Field label="Dispatcher Name" id="edn" value={form.dispatcherName} onChange={set('dispatcherName')} placeholder="Local Dispatch" />
+              <Field label="Dispatcher Email" id="ede" type="email" value={form.dispatcherEmail} onChange={set('dispatcherEmail')} placeholder="dispatch@example.com" />
             </div>
             <div className={styles.emailPreview}>
               <div className={styles.previewLabel}>Email sent on crash detection:</div>
               <div className={styles.previewBody}>
-                <strong>To:</strong> {form.emergencyEmail||'[emergency email]'}<br/>
+                <strong>To:</strong> {[form.emergencyEmail, form.dispatcherEmail].filter(Boolean).join(', ') || '[family/dispatcher email]'}<br/>
                 <strong>Subject:</strong> 🚨 CrashGuard Alert — {form.name||'[driver]'} has been in a crash<br/><br/>
                 Dear {form.emergencyName||'Emergency Contact'},<br/>
                 A crash has been detected. Please contact emergency services.<br/><br/>
@@ -126,6 +165,9 @@ export default function Profile() {
       <div className={styles.actions}>
         <button className={styles.btnPrimary} onClick={save} disabled={saving}>
           {saving ? <span className={styles.spinner}/> : null} Save to {FIREBASE_CONFIGURED?'Firestore':'LocalStorage'}
+        </button>
+        <button className={styles.btnOutline} onClick={sendTestEmail} disabled={sendingTest}>
+          {sendingTest ? <span className={styles.spinner}/> : null} Send Test Email {EMAIL_CONFIGURED ? '(Real)' : '(Simulated)'}
         </button>
         <button className={styles.btnOutline} onClick={()=>setForm({...profile})}>Discard Changes</button>
       </div>

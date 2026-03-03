@@ -17,6 +17,9 @@
 .sectionLabel::after { content:''; flex:1; height:1px; background:var(--border); }
 .cameraBox { position:relative; background:#000; border:1px solid var(--border); aspect-ratio:16/9; overflow:hidden; }
 .video { width:100%; height:100%; object-fit:cover; display:block; }
+.detectionOverlay { position:absolute; inset:0; pointer-events:none; z-index:3; }
+.detectionBox { position:absolute; border:2px solid #ff3b30; box-shadow:0 0 0 1px rgba(0,0,0,0.35) inset; }
+.detectionTag { position:absolute; left:0; top:-20px; background:#ff3b30; color:#fff; font-family:var(--font-mono); font-size:0.55rem; padding:2px 5px; white-space:nowrap; }
 .placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; font-family:var(--font-mono); font-size:0.72rem; color:var(--muted); }
 .placeholderIcon { font-size:2.5rem; color:var(--border2); }
 .placeholderSub { font-family:var(--font-mono); font-size:0.6rem; color:var(--border2); }

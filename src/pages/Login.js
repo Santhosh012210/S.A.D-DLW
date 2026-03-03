@@ -23,6 +23,7 @@ export default function Login() {
   const [regForm, setRegForm] = useState({
     name:'', email:'', phone:'', password:'',
     emergencyEmail:'', emergencyName:'', plate:'',
+    dispatcherEmail:'', dispatcherName:'',
     vehicle:'', vehicleColor:'', blood:'O+',
   });
 
@@ -105,6 +106,8 @@ export default function Login() {
               </div>
               <Field label="Emergency Contact Email" id="rec" type="email" value={regForm.emergencyEmail} onChange={setR('emergencyEmail')} placeholder="family@example.com" />
               <Field label="Emergency Contact Name" id="ren" value={regForm.emergencyName} onChange={setR('emergencyName')} placeholder="Parent Name" />
+              <Field label="Dispatcher Email" id="rde" type="email" value={regForm.dispatcherEmail} onChange={setR('dispatcherEmail')} placeholder="dispatch@example.com" />
+              <Field label="Dispatcher Name" id="rdn" value={regForm.dispatcherName} onChange={setR('dispatcherName')} placeholder="Local Dispatch" />
               <Field label="License Plate" id="rpl" value={regForm.plate} onChange={setR('plate')} placeholder="SKZ 1234 A" />
               <Field label="Vehicle" id="rv" value={regForm.vehicle} onChange={setR('vehicle')} placeholder="Toyota Corolla 2023" />
             </div>

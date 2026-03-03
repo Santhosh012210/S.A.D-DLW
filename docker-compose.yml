@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  crashguard-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crashguard-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
